@@ -17,6 +17,14 @@ func New(c Config) (*Mongo, error) {
 		return nil, err
 	}
 
+	if err = client.Connect(context.Background()); err != nil {
+		return nil, err
+	}
+
+	if err = client.Ping(context.Background(), nil); err != nil {
+		return nil, err
+	}
+
 	return &Mongo{database: client.Database(c.Scheme)}, nil
 }
 
