@@ -21,7 +21,16 @@ type SyncCollectionOption struct {
 }
 
 func New(c Config, logger *zap.SugaredLogger) (*Mongo, error) {
-	client, err := mongo.NewClient(options.Client().ApplyURI(c.URI).SetAuth(c.Auth))
+	auth := options.Credential{
+		AuthMechanism:           c.Auth.AuthMechanism,
+		AuthMechanismProperties: c.Auth.AuthMechanismProperties,
+		AuthSource:              c.Auth.AuthSource,
+		Username:                c.Auth.Username,
+		Password:                c.Auth.Password,
+		PasswordSet:             c.Auth.PasswordSet,
+	}
+
+	client, err := mongo.NewClient(options.Client().ApplyURI(c.URI).SetAuth(auth))
 	if err != nil {
 		return nil, err
 	}
