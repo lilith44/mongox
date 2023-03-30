@@ -53,6 +53,13 @@ func (m *Mongo) Database() *mongo.Database {
 	return m.database
 }
 
+func (m *Mongo) V2() *V2 {
+	return &V2{
+		database: m.database,
+		logger:   m.logger,
+	}
+}
+
 func (m *Mongo) Sync(ctx context.Context, options ...*SyncCollectionOption) error {
 	if len(options) == 0 {
 		return nil
@@ -159,6 +166,19 @@ func (m *Mongo) DeleteOne(
 	return r.DeletedCount, nil
 }
 
+func (m *Mongo) DeleteMany(
+	ctx context.Context,
+	collection string, filter any, options ...*options.DeleteOptions,
+) (int64, error) {
+	m.logger.Infof("Delete one documents in collection %s, filter: %s", collection, filter)
+
+	r, err := m.database.Collection(collection).DeleteMany(ctx, filter, options...)
+	if err != nil {
+		return 0, err
+	}
+	return r.DeletedCount, nil
+}
+
 func (m *Mongo) BulkWrite(
 	ctx context.Context,
 	collection string, models []mongo.WriteModel, options ...*options.BulkWriteOptions,
@@ -203,7 +223,7 @@ func (m *Mongo) FindOne(
 	m.logger.Infof("Find one document in collection %s, filter: %s", getCollectionName(beanPtr), filter)
 
 	err := m.database.Collection(getCollectionName(beanPtr)).FindOne(ctx, filter, options...).Decode(beanPtr)
-	return parseFindResult(err)
+	return parseFindOneResult(err)
 }
 
 func (m *Mongo) FindOneAndDelete(
@@ -213,7 +233,7 @@ func (m *Mongo) FindOneAndDelete(
 	m.logger.Infof("Find one document in collection %s and delete, filter: %s", getCollectionName(beanPtr), filter)
 
 	err := m.database.Collection(getCollectionName(beanPtr)).FindOneAndDelete(ctx, filter, options...).Decode(beanPtr)
-	return parseFindResult(err)
+	return parseFindOneResult(err)
 }
 
 func (m *Mongo) FindOneAndUpdate(
@@ -223,7 +243,7 @@ func (m *Mongo) FindOneAndUpdate(
 	m.logger.Infof("Find one document in collection %s and update, filter: %s, update: %s", getCollectionName(beanPtr), filter, update)
 
 	err := m.database.Collection(getCollectionName(beanPtr)).FindOneAndUpdate(ctx, filter, update, options...).Decode(beanPtr)
-	return parseFindResult(err)
+	return parseFindOneResult(err)
 }
 
 func (m *Mongo) FindOneAndReplace(
@@ -233,7 +253,7 @@ func (m *Mongo) FindOneAndReplace(
 	m.logger.Infof("Find one document in collection %s and replace, filter: %s, replacement: %s", getCollectionName(beanPtr), filter, replacement)
 
 	err := m.database.Collection(getCollectionName(beanPtr)).FindOneAndReplace(ctx, filter, replacement, options...).Decode(beanPtr)
-	return parseFindResult(err)
+	return parseFindOneResult(err)
 }
 
 func (m *Mongo) Aggregate(

@@ -5,6 +5,7 @@ import (
 	"reflect"
 
 	"github.com/lilith44/easy"
+	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
@@ -26,7 +27,74 @@ func getCollectionName(s any) string {
 
 	return ""
 }
-func parseFindResult(err error) (bool, error) {
+
+func getUpdateFieldsByStruct(bean any, mustFields ...string) bson.D {
+	value := reflect.Indirect(reflect.ValueOf(bean))
+	if value.Kind() != reflect.Struct {
+		panic("getUpdateFieldsByStruct: needs a struct, or a pointer to it")
+	}
+
+	var (
+		filter    bson.D
+		f         func(value reflect.Value, prefix string)
+		mustField = make(map[string]bool)
+	)
+
+	for _, field := range mustFields {
+		mustField[field] = true
+	}
+
+	f = func(value reflect.Value, prefix string) {
+		typ := value.Type()
+		for i := 0; i < typ.NumField(); i++ {
+			t := typ.Field(i)
+			if !t.IsExported() {
+				continue
+			}
+
+			key := t.Tag.Get("bson")
+			if key == "" {
+				key = t.Name
+			}
+			key = prefix + key
+
+			if len(mustField) != 0 && !mustField[key] {
+				continue
+			}
+
+			v := value.Field(i)
+			if mustField[key] {
+				filter = append(filter, bson.E{Key: key, Value: v.Interface()})
+				continue
+			}
+
+			if v.Kind() == reflect.Pointer {
+				if v.IsNil() {
+					continue
+				}
+				v = v.Elem()
+			}
+
+			if v.IsZero() {
+				continue
+			}
+
+			if v.Kind() == reflect.Struct {
+				f(v, key+".")
+
+				continue
+			}
+
+			filter = append(filter, bson.E{Key: key, Value: v.Interface()})
+		}
+	}
+
+	f(value, "")
+
+	return filter
+}
+
+func parseFindOneResult(err error) (bool, error) {
 	if err == nil {
 		return true, nil
 	}
