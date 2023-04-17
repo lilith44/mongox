@@ -18,6 +18,12 @@ func getCollectionName(s any) string {
 		if element.Kind() == reflect.Pointer {
 			element = element.Elem()
 		}
+		if element.Kind() == reflect.Interface {
+			if value.Len() == 0 {
+				panic("slice []any must not be empty")
+			}
+			return getCollectionName(value.Index(0).Interface())
+		}
 		return easy.Underscore(element.Name())
 	case reflect.Struct:
 		return easy.Underscore(value.Type().Name())

@@ -16,8 +16,11 @@ type Mongo struct {
 }
 
 type SyncCollectionOption struct {
-	Collection string
-	Options    []*options.CreateCollectionOptions
+	Collection        string
+	CollectionOptions []*options.CreateCollectionOptions
+
+	Indexes      []mongo.IndexModel
+	IndexOptions []*options.CreateIndexesOptions
 }
 
 func New(c Config, logger *zap.SugaredLogger) (*Mongo, error) {
@@ -80,8 +83,14 @@ func (m *Mongo) Sync(ctx context.Context, options ...*SyncCollectionOption) erro
 			continue
 		}
 
-		if err = m.database.CreateCollection(ctx, option.Collection, option.Options...); err != nil {
+		if err = m.database.CreateCollection(ctx, option.Collection, option.CollectionOptions...); err != nil {
 			return err
+		}
+
+		if len(option.Indexes) != 0 {
+			if _, err = m.database.Collection(option.Collection).Indexes().CreateMany(ctx, option.Indexes, option.IndexOptions...); err != nil {
+				return err
+			}
 		}
 	}
 	return nil
