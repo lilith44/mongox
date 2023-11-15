@@ -3,8 +3,7 @@ package optionx
 import "go.mongodb.org/mongo-driver/mongo/options"
 
 type InsertManyOptions struct {
-	Collection string
-	Options    []*options.InsertManyOptions
+	Options []*options.InsertManyOptions
 }
 
 func NewInsertManyOption() *InsertManyOptions {

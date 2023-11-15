@@ -20,21 +20,17 @@ func (m *Mongo) InsertOne(
 	}
 
 	collectionName := getCollectionName(bean)
-	if o.Collection == "" {
-		o.Collection = collectionName
-	}
-
 	m.collections[collectionName].setUpdateAt(bean)
 
 	t := timer.New(
 		timer.WithLogger(m.logger),
 		timer.WithMethod("InsertOne"),
-		timer.WithCollection(o.Collection),
+		timer.WithCollection(collectionName),
 		timer.WithBean(bean),
 	)
 	defer t.End(err)
 
-	result, err = m.database.Collection(o.Collection).InsertOne(ctx, bean, o.Options...)
+	result, err = m.database.Collection(collectionName).InsertOne(ctx, bean, o.Options...)
 	return
 }
 
@@ -49,10 +45,6 @@ func (m *Mongo) InsertMany(
 	}
 
 	collectionName := getCollectionName(beans)
-	if o.Collection == "" {
-		o.Collection = collectionName
-	}
-
 	for _, bean := range beans {
 		m.collections[collectionName].setUpdateAt(bean)
 	}
@@ -60,12 +52,12 @@ func (m *Mongo) InsertMany(
 	t := timer.New(
 		timer.WithLogger(m.logger),
 		timer.WithMethod("InsertMany"),
-		timer.WithCollection(o.Collection),
+		timer.WithCollection(collectionName),
 		timer.WithBean(beans),
 	)
 	defer t.End(err)
 
-	result, err = m.database.Collection(o.Collection).InsertMany(ctx, beans, o.Options...)
+	result, err = m.database.Collection(collectionName).InsertMany(ctx, beans, o.Options...)
 	return
 }
 
