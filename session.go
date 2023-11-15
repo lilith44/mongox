@@ -3,9 +3,8 @@ package mongox
 import (
 	"context"
 
-	"mongox/optionx"
-	"mongox/timer"
-
+	"github.com/lilith44/mongox/optionx"
+	"github.com/lilith44/mongox/timer"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 )

@@ -1,4 +1,4 @@
-module mongox
+module github.com/lilith44/mongox
 
 go 1.21
 
