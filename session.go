@@ -312,9 +312,6 @@ func (m *Mongo) Find(ctx context.Context, beansPtr any, options ...optionx.FindO
 	}
 
 	collectionName := getCollectionName(beansPtr)
-	if o.Collection == "" {
-		o.Collection = collectionName
-	}
 	if o.Filter == nil {
 		o.Filter = make(bson.M)
 	}
@@ -325,13 +322,13 @@ func (m *Mongo) Find(ctx context.Context, beansPtr any, options ...optionx.FindO
 	t := timer.New(
 		timer.WithLogger(m.logger),
 		timer.WithMethod("Find"),
-		timer.WithCollection(o.Collection),
+		timer.WithCollection(collectionName),
 		timer.WithFilter(o.Filter),
 	)
 	defer t.End(err)
 
 	var cursor *mongo.Cursor
-	if cursor, err = m.database.Collection(o.Collection).Find(ctx, o.Filter, o.Options...); err != nil {
+	if cursor, err = m.database.Collection(collectionName).Find(ctx, o.Filter, o.Options...); err != nil {
 		return
 	}
 
@@ -346,9 +343,6 @@ func (m *Mongo) FindOne(ctx context.Context, beanPtr any, options ...optionx.Fin
 	}
 
 	collectionName := getCollectionName(beanPtr)
-	if o.Collection == "" {
-		o.Collection = collectionName
-	}
 	if o.Filter == nil {
 		o.Filter = make(bson.M)
 	}
@@ -359,12 +353,12 @@ func (m *Mongo) FindOne(ctx context.Context, beanPtr any, options ...optionx.Fin
 	t := timer.New(
 		timer.WithLogger(m.logger),
 		timer.WithMethod("FindOne"),
-		timer.WithCollection(o.Collection),
+		timer.WithCollection(collectionName),
 		timer.WithFilter(o.Filter),
 	)
 	defer t.End(err)
 
-	err = m.database.Collection(o.Collection).FindOne(ctx, o.Filter, o.Options...).Decode(beanPtr)
+	err = m.database.Collection(collectionName).FindOne(ctx, o.Filter, o.Options...).Decode(beanPtr)
 	exist, err = parseFindOneResult(err)
 	return
 }
@@ -397,17 +391,19 @@ func (m *Mongo) Aggregate(
 
 func (m *Mongo) Transaction(ctx context.Context, f func(session mongo.SessionContext) error) error {
 	return m.database.Client().UseSession(ctx, func(session mongo.SessionContext) error {
-		m.logger.Infof("transaction begin...")
-
 		err := session.StartTransaction()
 		if err != nil {
+			m.logger.Errorf("start transaction failed: %s", err)
+
 			return err
 		}
+
+		m.logger.Infof("transaction start...")
 
 		defer func() {
 			session.EndSession(ctx)
 			if err != nil {
-				m.logger.Errorf("Error accurred in transaction: %s", err)
+				m.logger.Errorf("Error occurred in transaction: %s", err)
 			}
 		}()
 
@@ -417,7 +413,7 @@ func (m *Mongo) Transaction(ctx context.Context, f func(session mongo.SessionCon
 			return err
 		}
 
-		m.logger.Infof("transaction committed...")
+		m.logger.Infof("transaction ended...")
 		return session.CommitTransaction(ctx)
 	})
 }

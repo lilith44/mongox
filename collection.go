@@ -8,6 +8,11 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 )
 
+const (
+	updateAtTag = "update_at"
+	deleteAtTag = "delete_at"
+)
+
 type field struct {
 	indexes []int
 	name    string
@@ -35,7 +40,7 @@ func (c *collection) parseFields(value reflect.Value, tag string, index []int) {
 			continue
 		}
 
-		if f.Tag.Get(tag) == "update_at" {
+		if f.Tag.Get(tag) == updateAtTag {
 			name := strings.Split(f.Tag.Get("bson"), ",")[0]
 			if name == "" {
 				name = f.Name
@@ -48,7 +53,7 @@ func (c *collection) parseFields(value reflect.Value, tag string, index []int) {
 			})
 		}
 
-		if f.Tag.Get(tag) == "delete_at" {
+		if f.Tag.Get(tag) == deleteAtTag {
 			name := strings.Split(f.Tag.Get("bson"), ",")[0]
 			if name == "" {
 				name = f.Name

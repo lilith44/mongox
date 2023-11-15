@@ -3,10 +3,9 @@ package optionx
 import "go.mongodb.org/mongo-driver/mongo/options"
 
 type FindOneOptions struct {
-	Collection string
-	Filter     any
-	Unscoped   bool
-	Options    []*options.FindOneOptions
+	Filter   any
+	Unscoped bool
+	Options  []*options.FindOneOptions
 }
 
 func NewFindOneOption() *FindOneOptions {
